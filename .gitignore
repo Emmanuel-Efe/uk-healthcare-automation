@@ -1,0 +1,33 @@
+# Secrets - never commit this
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Local SQLite database
+*.db
+*.sqlite3
+caregiver_platform.db
+
+# User-uploaded content (not meant to live in git; use persistent storage
+# or object storage in production instead)
+uploads/documents/
+static/uploads/avatars/*
+!static/uploads/avatars/.gitkeep
+
+# OS / editor cruft
+.DS_Store
+.vscode/
+.idea/
+*.swp

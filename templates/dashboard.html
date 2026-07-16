@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | UK Healthcare Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Runs synchronously before anything paints, so there's no flash of
+         the wrong theme. Must stay a plain blocking <script> (no defer/
+         async) since it needs to run before the body renders. -->
+    <script>
+        (function() {
+            const stored = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = stored === 'dark' || (!stored && prefersDark);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased transition-colors duration-200">
+
+    <!-- Global Header Base Area -->
+    <header class="bg-blue-600 text-white px-3 md:px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
+        <div class="flex items-center space-x-2 md:space-x-3 min-w-0">
+            <!-- Mobile menu toggle -->
+            <button id="mobileMenuBtn" class="md:hidden bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg flex-shrink-0" aria-label="Toggle menu">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+            </button>
+            <div class="w-9 h-9 md:w-10 md:h-10 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center text-blue-600 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-.621-.504-1.125-1.125-1.125H9.75M10.5 7.5L12 3v4.5M3 12h3L9 4l3 16 3-11 2 3h4" />
+                </svg>
+            </div>
+            <div class="min-w-0 hidden sm:block">
+                <span class="text-sm font-bold tracking-tight text-white block truncate">UK Healthcare Job Automation</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 md:space-x-4 text-xs font-medium flex-shrink-0">
+            <!-- Avatar + name -->
+            <div class="flex items-center gap-2">
+                {% if user and user.profile_picture %}
+                <img src="{{ user.profile_picture }}" alt="{{ username }}" class="w-7 h-7 rounded-full object-cover border-2 border-white/30">
+                {% else %}
+                <div class="w-7 h-7 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">{{ user.avatar_initials if user else username[:2]|upper }}</div>
+                {% endif %}
+                <span class="text-blue-100 hidden md:inline">Signed in as <strong class="text-white font-semibold">{{ username }}</strong></span>
+            </div>
+
+            <!-- Theme Toggle Component Button -->
+            <button id="themeToggleBtn" class="bg-white/10 hover:bg-white/20 text-white p-2 rounded-xl border border-white/10 flex items-center justify-center transition-all cursor-pointer" aria-label="Toggle Theme">
+                <span id="themeToggleIcon" class="text-sm">🌙</span>
+            </button>
+            <a href="/inbox" class="relative flex items-center text-blue-100 hover:text-white transition-colors group">
+                <svg class="w-5 h-5 md:mr-1.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5L12 12.75M12 12.75L3.75 7.5M20.25 7.5V16.5C20.25 16.8978 20.092 17.2794 19.8107 17.5607C19.5294 17.842 19.1478 18 18.75 18H5.25C4.85218 18 4.47064 17.842 4.18934 17.5607C3.90804 17.2794 3.75 16.8978 3.75 16.5V7.5M20.25 7.5H3.75" />
+                </svg>
+                <span class="hidden md:inline">Inbox</span>
+                {% if unread_count and unread_count > 0 %}
+                <span class="absolute -top-1 -right-0.5 w-2 h-2 bg-red-500 border-2 border-blue-600 rounded-full"></span>
+                {% endif %}
+            </a>
+            <div class="h-4 w-px bg-white/20 hidden sm:block"></div>
+            <a href="/logout" class="bg-white/10 hover:bg-white/20 text-white px-2.5 md:px-3 py-1.5 rounded-xl transition-all border border-white/20 font-semibold whitespace-nowrap">Log out</a>
+        </div>
+    </header>
+
+    <div class="flex flex-1 relative">
+        <!-- Mobile overlay (click to close sidebar) -->
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/40 z-30 md:hidden"></div>
+
+        <!-- Dashboard Workspace Navigation Grid Links Component Sidebar Layout -->
+        <aside id="sidebar" class="fixed md:static top-16 bottom-0 md:top-auto md:bottom-auto left-0 z-40 w-64 bg-slate-100 border-r border-slate-200 dark:bg-slate-950 dark:border-slate-800 p-4 space-y-1 text-sm font-medium text-slate-600 dark:text-slate-400 transition-transform duration-200 -translate-x-full md:translate-x-0 overflow-y-auto">
+            <a href="/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'overview' or not tab %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Dashboard</span>
+            </a>
+            <a href="/profile" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'profile' %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Profile</span>
+            </a>
+            <a href="/jobs" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'jobs' %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Jobs</span>
+            </a>
+            <a href="/applications" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'applications' %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Applications</span>
+            </a>
+
+            <a href="/calendar" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'calendar' %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Calendar</span>
+            </a>
+
+            <a href="/inbox" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'inbox' %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Inbox</span>
+                {% if unread_count and unread_count > 0 %}
+                <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <a href="/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all {% if tab == 'settings' %} bg-blue-600 text-white font-bold shadow-md shadow-blue-600/10 {% else %} hover:bg-slate-200/60 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white {% endif %}">
+                <span>Settings</span>
+            </a>
+        </aside>
+
+        <!-- Dynamic Extensible Content Frame Box Layer -->
+        <main class="flex-1 p-4 md:p-8 bg-slate-50 dark:bg-slate-900 overflow-y-auto transition-colors duration-200 w-full min-w-0">
+            {% block content %}
+            <!-- Default Content: Overview Dashboard Summary Layout -->
+
+            <div class="space-y-6 max-w-7xl">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">View your job search progress, upcoming interviews, and recent system alerts at a glance.</p>
+                </div>
+
+                <!-- Metric Summary Grid Panel Layout -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Jobs discovered</span>
+                        <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1.5">{{ metrics.total_discovered }}</p>
+                    </div>
+                    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500"></div>
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Jobs today</span>
+                        <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1.5">{{ metrics.jobs_today }}</p>
+                    </div>
+                    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden group">
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500"></div>
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block">Jobs this week</span>
+                        <p class="text-3xl font-bold text-slate-900 dark:text-white mt-1.5">{{ metrics.jobs_week }}</p>
+                    </div>
+                </div>
+
+                <!-- Action Required -->
+                {% if action_items %}
+                <div class="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-5">
+                    <h3 class="text-sm font-bold text-amber-800 dark:text-amber-400 tracking-tight mb-3 flex items-center gap-2">
+                        <span>⚠️ Action Required</span>
+                    </h3>
+                    <ul class="space-y-2">
+                        {% for item in action_items %}
+                        <li class="text-sm text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full flex-shrink-0"></span>
+                            {{ item.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Application Tracker Summary (see /applications for full detail) -->
+                <div id="tracker" class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">APPLICATION TRACKER</h3>
+                        <a href="/applications" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View all applications →</a>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+                        {% for status in tracker_columns %}
+                        <a href="/applications" class="block bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ tracker[status]|length }}</p>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ status }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Personalized Feed + Inbox -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2">
+                        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight border-b border-slate-100 dark:border-slate-800/60 pb-3">RECOMMENDED FOR YOU</h3>
+                            {% if not user.preferred_band and not user.preferred_region and not user.preferred_clinical_interest %}
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Set your preferences in Job Search Assistant below to personalize this feed.</p>
+                            {% endif %}
+                            <div class="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                                {% for entry in personalized_feed %}
+                                {% set job = entry.job %}
+                                <div class="border-b border-slate-100 dark:border-slate-800/60 pb-3 last:border-0 last:pb-0">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <h4 class="text-sm font-bold text-blue-800 dark:text-blue-400 line-clamp-2"><a href="/job/{{ job.id }}" class="hover:underline">{{ job.title }}</a></h4>
+                                        {% if entry.match %}
+                                        <span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap">{{ entry.match }}% match</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{{ job.employer }} · {{ job.location }}{% if job.band %} · {{ job.band }}{% endif %}</p>
+                                </div>
+                                {% else %}
+                                <p class="text-xs text-slate-400 dark:text-slate-500">No jobs available yet. Check back soon.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Latest Jobs -->
+                        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4 mt-6">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight border-b border-slate-100 dark:border-slate-800/60 pb-3">LATEST JOBS</h3>
+                            <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                                {% for job in jobs %}
+                                <div class="border-b border-slate-100 dark:border-slate-800/60 pb-3 last:border-0 last:pb-0">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <h4 class="text-sm font-bold text-blue-800 dark:text-blue-400 line-clamp-2"><a href="/job/{{ job.id }}" class="hover:underline">{{ job.title }}</a></h4>
+                                        <span class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold px-1.5 py-0.5 rounded whitespace-nowrap">{{ job.source }}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{{ job.employer }} · {{ job.date_added }}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-1 space-y-6">
+                        <!-- Inbox Preview -->
+                        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight p-5 border-b border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                                <span>INBOX</span>
+                                {% if unread_count and unread_count > 0 %}
+                                <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{{ unread_count }} new</span>
+                                {% endif %}
+                            </h3>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                                {% for note in notifications %}
+                                <div class="p-4 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+                                    <p class="text-slate-700 dark:text-slate-300 {% if not note.is_read %}font-bold{% endif %}">{{ note.message }}</p>
+                                    <p class="text-slate-400 dark:text-slate-500 mt-1">{{ note.created_at.strftime('%d %b, %H:%M') }}</p>
+                                </div>
+                                {% else %}
+                                <p class="p-4 text-slate-400 dark:text-slate-500">No messages yet. Recruiter outreach and system alerts will appear here.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Document Vault -->
+                    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight p-5 border-b border-slate-100 dark:border-slate-800/60">DOCUMENT VAULT</h3>
+                        <div class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                            {% for doc in documents %}
+                            <div class="p-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-slate-700 dark:text-slate-300">{{ doc.doc_type }}</p>
+                                        <p class="text-slate-400 dark:text-slate-500 truncate max-w-[140px]">{{ doc.file_name }}</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <a href="/documents/{{ doc.id }}/download" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Download</a>
+                                        <form method="POST" action="/documents/{{ doc.id }}/delete" onsubmit="return confirm('Delete this file?');">
+                                            <button type="submit" class="text-red-600 font-bold hover:underline">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <!-- Replace Form -->
+                                <form method="POST" action="/documents/{{ doc.id }}/replace" enctype="multipart/form-data" class="flex gap-2 pt-2">
+                                    <input type="file" name="file" required class="text-[10px] w-full">
+                                    <button type="submit" class="bg-slate-200 dark:bg-slate-800 px-2 rounded font-bold">Replace</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <p class="p-4 text-slate-400 dark:text-slate-500">No documents uploaded yet.</p>
+                            {% endfor %}
+                        </div>
+                          <form method="POST" action="/documents/upload" enctype="multipart/form-data" class="p-4 border-t border-slate-100 dark:border-slate-800/60 space-y-2">
+                                <select name="doc_type" class="w-full text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                                    <option value="CV">CV</option>
+                                    <option value="Cover Letter">Cover Letter</option>
+                                    <option value="Certificate">Certificate</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <input type="file" name="file" required class="w-full text-[11px] text-slate-500 dark:text-slate-400">
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 rounded">Upload</button>
+                            </form>
+                    </div>
+                    </div>
+                </div>
+
+                <!-- Job Search Assistant Summary (see /settings for full controls) -->
+                <div id="automation" class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">JOB SEARCH ASSISTANT</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                {% if user.automation_enabled %}
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">● Active</span> — {{ user.applications_auto_sent or 0 }} applications sent automatically
+                                {% else %}
+                                <span class="text-slate-400">● Off</span> — Turn this on in Settings to auto-search and apply on your behalf
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="/settings" class="text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg">Manage in Settings →</a>
+                    </div>
+                </div>
+            </div>
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Theme toggle script lives here, outside the content block, so it
+         runs on every page that extends this layout, not just the default
+         dashboard overview content. -->
+    <script>
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeToggleIcon = document.getElementById('themeToggleIcon');
+
+        // Theme class itself is already set by the blocking script in <head>
+        // (before paint, to avoid a flash) - this just syncs the icon to match.
+        themeToggleIcon.textContent = htmlElement.classList.contains('dark') ? '🌙' : '☀️';
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (htmlElement.classList.contains('dark')) {
+                htmlElement.classList.remove('dark');
+                themeToggleIcon.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                htmlElement.classList.add('dark');
+                themeToggleIcon.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // Mobile sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('hidden');
+        }
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('hidden');
+        }
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.contains('-translate-x-full') ? openSidebar() : closeSidebar();
+        });
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeSidebar));
+    </script>
+
+</body>
+</html>

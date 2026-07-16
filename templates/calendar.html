@@ -1,0 +1,233 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="space-y-6 max-w-3xl">
+
+
+
+    <!-- Month Navigation -->
+    <div class="flex justify-between items-center mb-6">
+
+        <a href="/calendar?date_str={{ prev_link }}"
+           class="text-xs font-bold px-3 py-1.5 rounded bg-blue-600 text-white shadow-md shadow-blue-600/10 transition-all hover:bg-blue-700">
+            ← Previous
+        </a>
+
+        <h2 class="text-2xl font-bold text-slate-700 dark:text-white">
+            {{ current_date.strftime("%B %Y") }}
+        </h2>
+
+        <a href="/calendar?date_str={{ next_link }}"
+           class="text-xs font-bold px-3 py-1.5 rounded bg-blue-600 text-white shadow-md shadow-blue-600/10 transition-all hover:bg-blue-700">
+            Next →
+        </a>
+
+    </div>
+
+    <!-- Calendar -->
+    <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+
+        <div id="calendar-grid"
+             class="grid grid-cols-7 gap-2 text-center">
+
+            {% for day in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] %}
+            <div class="text-xs font-bold text-slate-400 uppercase pb-2">
+                {{ day }}
+            </div>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    <!-- Interview List -->
+
+    <h2 class="text-lg font-bold text-slate-900 dark:text-white">
+        Scheduled Interviews
+    </h2>
+
+    <div id="event-list" class="space-y-3"></div>
+
+</div>
+
+<script>
+
+const eventsData = {{ calendar_events_json | safe }};
+const fullEventsList = {{ events | tojson | safe }};
+
+const grid = document.getElementById("calendar-grid");
+const listContainer = document.getElementById("event-list");
+
+// Month currently being viewed
+const viewedDate = new Date("{{ today_str }}");
+
+// Real current date
+const today = new Date();
+
+const firstDay =
+    new Date(
+        viewedDate.getFullYear(),
+        viewedDate.getMonth(),
+        1
+    ).getDay();
+
+const daysInMonth =
+    new Date(
+        viewedDate.getFullYear(),
+        viewedDate.getMonth()+1,
+        0
+    ).getDate();
+
+let selectedDay = null;
+
+
+// ----------------------
+// Render Interview List
+// ----------------------
+
+function renderList(dateFilter=null){
+
+    listContainer.innerHTML = "";
+
+    const filtered = dateFilter
+        ? fullEventsList.filter(
+            e => e.application.interview_date.startsWith(dateFilter)
+          )
+        : fullEventsList;
+
+    if(filtered.length===0){
+
+        listContainer.innerHTML = `
+            <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-12 text-center">
+                <p class="text-slate-500 dark:text-slate-400">
+                    No interviews scheduled
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+    filtered.forEach(e=>{
+
+        listContainer.innerHTML += `
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex items-center gap-4">
+
+                <div class="text-blue-600 font-bold text-center w-12">
+                    ${e.application.interview_date.split("T")[0].slice(-2)}
+                </div>
+
+                <div>
+
+                    <p class="font-bold dark:text-white">
+                        Interview: ${e.job.title}
+                    </p>
+
+                    <p class="text-xs text-slate-500">
+                        ${e.job.employer}
+                    </p>
+
+                </div>
+
+            </div>
+        `;
+
+    });
+
+}
+
+
+// ----------------------
+// Blank boxes before month
+// ----------------------
+
+for(let i=0;i<firstDay;i++){
+
+    grid.appendChild(document.createElement("div"));
+
+}
+
+
+
+// ----------------------
+// Draw Days
+// ----------------------
+
+for(let d=1;d<=daysInMonth;d++){
+
+    const dateStr =
+        `${viewedDate.getFullYear()}-${String(viewedDate.getMonth()+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+
+    const dayDiv = document.createElement("div");
+
+    dayDiv.className =
+        "h-16 border rounded p-1 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white transition";
+
+    dayDiv.innerHTML = `<strong>${d}</strong>`;
+
+
+    // TODAY
+
+    if(
+        d===today.getDate() &&
+        viewedDate.getMonth()===today.getMonth() &&
+        viewedDate.getFullYear()===today.getFullYear()
+    ){
+
+        dayDiv.classList.add(
+            "ring-2",
+            "ring-blue-500",
+            "font-bold"
+        );
+
+    }
+
+
+    // EVENT DOT
+
+    if(eventsData[dateStr]){
+
+        dayDiv.innerHTML += `
+            <div class="w-2 h-2 bg-blue-600 rounded-full mx-auto mt-2"></div>
+        `;
+
+    }
+
+
+    // CLICK
+
+    dayDiv.onclick = ()=>{
+
+        if(selectedDay){
+
+            selectedDay.classList.remove(
+                "bg-green-600",
+                "text-white"
+            );
+
+        }
+
+        selectedDay = dayDiv;
+
+        selectedDay.classList.add(
+            "bg-green-600",
+            "text-white"
+        );
+
+        renderList(dateStr);
+
+    };
+
+
+    grid.appendChild(dayDiv);
+
+}
+
+
+// Initial List
+
+renderList();
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="space-y-6 max-w-7xl">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Profile</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your personal details, employment history, and professional credentials.</p>
+    </div>
+
+    {% if msg %}
+    <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">{{ msg }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 px-4 py-3 rounded-xl text-sm font-medium">{{ error }}</div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Profile Picture -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">PROFILE PICTURE</h3>
+            <div class="flex items-center gap-4">
+                {% if user.profile_picture %}
+                <img src="{{ user.profile_picture }}" alt="Profile picture" class="w-16 h-16 rounded-full object-cover border border-slate-200 dark:border-slate-700">
+                {% else %}
+                <div class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg flex-shrink-0">{{ user.avatar_initials }}</div>
+                {% endif %}
+                <form method="POST" action="/profile/avatar/upload" enctype="multipart/form-data" class="flex items-center gap-2">
+                    <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" required class="text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer">
+                    <button type="submit" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700">Upload</button>
+                </form>
+            </div>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-2">This appears next to your name in the top navigation. JPG, PNG, WEBP or GIF, up to 5MB.</p>
+        </div>
+
+        <!-- Professional Bio -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">PROFESSIONAL BIO</h3>
+            <form method="POST" action="/profile/bio" class="space-y-2 text-xs">
+                <label class="text-slate-500 dark:text-slate-400 block mb-1">A short summary of your experience and strengths - this appears at the top of your generated CV, above your employment history.</label>
+                <textarea name="experience_summary" rows="3" placeholder="e.g. Compassionate registered nurse with 5+ years' experience in acute adult care, specialising in patient triage and care planning across NHS and private settings..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-3 py-2 dark:text-white">{{ user.experience_summary or '' }}</textarea>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded">Save bio</button>
+            </form>
+        </div>
+
+        <!-- Personal Information -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">PERSONAL INFORMATION</h3>
+            <form method="POST" action="/profile/personal" class="space-y-3 text-xs">
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Full name</label>
+                    <input type="text" name="full_name" value="{{ user.full_name or '' }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Professional email</label>
+                    <input type="email" value="{{ user.email }}" disabled class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Phone number</label>
+                    <input type="text" name="phone" value="{{ user.phone or '' }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Current address</label>
+                    <input type="text" name="address" value="{{ user.address or '' }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">LinkedIn profile</label>
+                    <input type="text" name="linkedin_url" value="{{ user.linkedin_url or '' }}" placeholder="https://linkedin.com/in/..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded">Save</button>
+            </form>
+        </div>
+
+        <!-- Professional Identity & Right to Work -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">PROFESSIONAL IDENTITY &amp; RIGHT TO WORK</h3>
+            <form method="POST" action="/profile/professional" class="space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-slate-500 dark:text-slate-400 block mb-1">Registration body</label>
+                        <select name="professional_registration_body" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                            <option value="">Select...</option>
+                            {% for body in ["NMC", "GMC", "HCPC", "GPhC", "Other"] %}
+                            <option value="{{ body }}" {% if user.professional_registration_body == body %}selected{% endif %}>{{ body }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-slate-500 dark:text-slate-400 block mb-1">Registration / PIN number</label>
+                        <input type="text" name="professional_registration_number" value="{{ user.professional_registration_number or '' }}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Visa / right to work status</label>
+                    <select name="visa_status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                        <option value="">Select...</option>
+                        {% for status in ["British Citizen", "Settled Status / ILR", "Skilled Worker Visa", "Requires Sponsorship", "Other"] %}
+                        <option value="{{ status }}" {% if user.visa_status == status %}selected{% endif %}>{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <label class="flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium">
+                    <input type="checkbox" name="right_to_work" value="1" {% if user.right_to_work %}checked{% endif %}>
+                    I confirm I currently have the right to work in the UK
+                </label>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">National Insurance number</label>
+                    <input type="text" name="national_insurance_number" value="{{ user.national_insurance_number or '' }}" placeholder="e.g. QQ123456C" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                    <p class="text-[10px] text-slate-400 mt-1">Stored securely and only used for CV/application auto-fill.</p>
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded">Save</button>
+            </form>
+        </div>
+
+        <!-- Employment History -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">EMPLOYMENT HISTORY</h3>
+            <div class="space-y-3 mb-4">
+                {% for job in employment_history %}
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs flex justify-between items-start">
+                    <div>
+                        <p class="font-bold text-slate-800 dark:text-slate-100">{{ job.job_title }} {% if job.grade_band %}<span class="text-blue-600 dark:text-blue-400">· {{ job.grade_band }}</span>{% endif %}</p>
+                        <p class="text-slate-500 dark:text-slate-400 mt-0.5">{{ job.institution_name }}{% if job.location %} · {{ job.location }}{% endif %}</p>
+                    </div>
+                    <span class="text-slate-400 dark:text-slate-500 whitespace-nowrap ml-3">{{ job.start_date }} – {{ 'Present' if job.is_current else job.end_date }}</span>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-400 dark:text-slate-500">No employment history added yet.</p>
+                {% endfor %}
+            </div>
+            <form method="POST" action="/profile/employment/add" class="grid grid-cols-2 md:grid-cols-6 gap-2 text-[11px] pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                <input type="text" name="institution_name" placeholder="Institution / Trust" required class="col-span-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="job_title" placeholder="Job title" required class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="grade_band" placeholder="Band" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="location" placeholder="Location" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="start_date" placeholder="Start (e.g. Jan 2022)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="end_date" placeholder="End (blank if current)" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <label class="flex items-center gap-1 text-slate-500 dark:text-slate-400 col-span-2"><input type="checkbox" name="is_current" value="1"> Current role</label>
+                <button type="submit" class="col-span-2 md:col-span-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded px-2 py-1.5">Add</button>
+            </form>
+        </div>
+
+        <!-- Education & Qualifications -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">EDUCATION &amp; QUALIFICATIONS</h3>
+            <div class="space-y-2 mb-4">
+                {% for edu in education %}
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs flex justify-between items-start">
+                    <div>
+                        <p class="font-bold text-slate-800 dark:text-slate-100">{{ edu.qualification_name }}</p>
+                        <p class="text-slate-500 dark:text-slate-400 mt-0.5">{{ edu.institution }}{% if edu.qualification_type %} · {{ edu.qualification_type }}{% endif %}</p>
+                    </div>
+                    <span class="text-slate-400 dark:text-slate-500 whitespace-nowrap ml-3">{{ edu.date_awarded }}</span>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-400 dark:text-slate-500">No qualifications added yet.</p>
+                {% endfor %}
+            </div>
+            <form method="POST" action="/profile/education/add" class="space-y-2 text-[11px] pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                <input type="text" name="qualification_name" placeholder="Qualification (e.g. BLS, Infection Control)" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <div class="grid grid-cols-3 gap-2">
+                    <input type="text" name="institution" placeholder="Institution" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                    <select name="qualification_type" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                        <option value="Degree">Degree</option>
+                        <option value="Certification">Certification</option>
+                        <option value="Short Course">Short Course</option>
+                    </select>
+                    <input type="text" name="date_awarded" placeholder="Date" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded px-3 py-1.5">Add</button>
+            </form>
+        </div>
+
+        <!-- Clinical Skills & Competencies -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">CLINICAL SKILLS &amp; COMPETENCIES</h3>
+            <input type="text" id="skillSearch" placeholder="Search skills..." class="w-full text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white mb-3">
+            <div id="skillTags" class="flex flex-wrap gap-2 mb-4">
+                {% for skill in skills %}
+                <span class="skill-tag bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 text-xs font-semibold px-2.5 py-1 rounded-full">{{ skill }}</span>
+                {% else %}
+                <p class="text-xs text-slate-400 dark:text-slate-500">No skills added yet.</p>
+                {% endfor %}
+            </div>
+            <form method="POST" action="/profile/skills" class="space-y-2 text-xs pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                <label class="text-slate-500 dark:text-slate-400 block mb-1">Edit skills (comma-separated)</label>
+                <textarea name="skills_list" rows="2" placeholder="Phlebotomy, Patient Triage, Care Planning, Medication Administration" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">{{ user.skills_list or '' }}</textarea>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded px-3 py-1.5">Save skills</button>
+            </form>
+            <script>
+                document.getElementById('skillSearch').addEventListener('input', function(e) {
+                    const term = e.target.value.toLowerCase();
+                    document.querySelectorAll('#skillTags .skill-tag').forEach(function(tag) {
+                        tag.style.display = tag.textContent.toLowerCase().includes(term) ? '' : 'none';
+                    });
+                });
+            </script>
+        </div>
+
+        <!-- Declarations -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">DECLARATIONS</h3>
+            <form method="POST" action="/profile/declarations" class="space-y-3 text-xs">
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">DBS (Criminal Record) status</label>
+                    <input type="text" name="dbs_status" value="{{ user.dbs_status or '' }}" placeholder="e.g. Clear - Enhanced, issued Jan 2026" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Health declaration</label>
+                    <select name="health_declaration_status" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                        <option value="">Select...</option>
+                        {% for status in ["Completed", "Not Started", "Pending Review"] %}
+                        <option value="{{ status }}" {% if user.health_declaration_status == status %}selected{% endif %}>{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Professional indemnity</label>
+                    <input type="text" name="indemnity_status" value="{{ user.indemnity_status or '' }}" placeholder="e.g. Covered via employer" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded">Save</button>
+            </form>
+        </div>
+
+        <!-- References -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">REFERENCES</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                {% for ref in references %}
+                <div class="bg-slate-50 dark:bg-slate-900 rounded-lg p-3 text-xs">
+                    <p class="font-bold text-slate-800 dark:text-slate-100">{{ ref.name }}</p>
+                    <p class="text-slate-500 dark:text-slate-400">{{ ref.role }}{% if ref.institution %} · {{ ref.institution }}{% endif %}</p>
+                    <p class="text-slate-400 dark:text-slate-500 mt-1">{{ ref.email }}{% if ref.phone %} · {{ ref.phone }}{% endif %}</p>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-400 dark:text-slate-500 md:col-span-2">Add at least two clinical supervisors/employers as references — this speeds up CV auto-generation.</p>
+                {% endfor %}
+            </div>
+            <form method="POST" action="/profile/reference/add" class="grid grid-cols-2 md:grid-cols-5 gap-2 text-[11px] pt-3 border-t border-slate-100 dark:border-slate-800/60">
+                <input type="text" name="name" placeholder="Full name" required class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="role" placeholder="Role" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="institution" placeholder="Institution" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="email" name="email" placeholder="Email" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <input type="text" name="phone" placeholder="Phone" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                <button type="submit" class="col-span-2 md:col-span-5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded px-3 py-1.5">Add reference</button>
+            </form>
+        </div>
+
+                <!-- CV Builder -->
+        <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm lg:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-2 border-b border-slate-100 dark:border-slate-800/60 pb-3">CV BUILDER</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Generate a professional CV automatically from everything you've filled in above. It's saved straight to your Document Vault on the Dashboard.</p>
+            <form method="POST" action="/cv/generate">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2.5 rounded-lg">Generate CV from Profile</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

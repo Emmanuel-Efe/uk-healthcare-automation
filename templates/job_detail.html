@@ -1,0 +1,74 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="space-y-6 max-w-4xl">
+    <a href="/jobs" class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">← Back to Jobs</a>
+
+    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-6 shadow-sm">
+        <div class="flex justify-between items-start gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-950 dark:text-white">{{ job.title }}</h1>
+                <p class="text-blue-600 dark:text-blue-400 font-semibold text-base mt-1">{{ job.employer }}</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ job.location }}</p>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 px-2 py-1 rounded whitespace-nowrap">{{ job.source }}</span>
+        </div>
+
+        <!-- Key facts grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/60">
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Band</span>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1">{{ job.band or 'Not specified' }}</p>
+            </div>
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Salary</span>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1">{{ job.salary or 'Not listed' }}</p>
+            </div>
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Closing date</span>
+                <p class="text-sm font-bold text-slate-800 dark:text-slate-100 mt-1">{{ job.closing_date or 'See listing' }}</p>
+            </div>
+            <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">Visa sponsorship</span>
+                <p class="text-sm font-bold mt-1 {{ 'text-emerald-600 dark:text-emerald-400' if job.visa_sponsorship else 'text-slate-500 dark:text-slate-400' }}">
+                    {{ '✔️ Available' if job.visa_sponsorship else 'Not stated on listing' }}
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/60 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+            <p>Reference: {{ job.job_ref }}</p>
+            <p>Discovered: {{ job.date_added }}</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap gap-3">
+            {% if job.source_url %}
+            <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2.5 rounded-lg">
+                View &amp; Apply on {{ job.source }} ↗
+            </a>
+            {% else %}
+            <span class="bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-500 text-sm font-bold px-5 py-2.5 rounded-lg cursor-not-allowed">
+                Official link unavailable for this listing
+            </span>
+            {% endif %}
+
+            {% if application %}
+            <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 self-center">✔ Tracked as "{{ application.status }}"</span>
+            {% else %}
+            <form method="POST" action="/jobs/{{ job.id }}/track">
+                <input type="hidden" name="status" value="Saved">
+                <button type="submit" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700">Save for later</button>
+            </form>
+            <form method="POST" action="/jobs/{{ job.id }}/track">
+                <input type="hidden" name="status" value="Applied">
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-5 py-2.5 rounded-lg">Mark as Applied</button>
+            </form>
+            {% endif %}
+        </div>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-3">
+            "View & Apply" takes you to the official listing to submit your real application. Use "Mark as Applied" afterwards to track it here.
+        </p>
+    </div>
+</div>
+{% endblock %}

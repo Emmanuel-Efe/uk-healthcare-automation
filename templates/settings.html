@@ -1,0 +1,99 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="space-y-6 max-w-3xl">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Settings</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure your search preferences and enable the Job Search Assistant automation.</p>
+    </div>
+
+    <!-- Account -->
+    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">ACCOUNT</h3>
+        <div class="grid grid-cols-2 gap-4 text-xs">
+            <div>
+                <span class="text-slate-400 dark:text-slate-500 block">Email</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-300">{{ user.email }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 dark:text-slate-500 block">Plan</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-300 capitalize">{{ user.tier }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Management -->
+    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">SECURITY</h3>
+        <form method="POST" action="/settings/password" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">New Password</label>
+                    <input type="password" name="new_password" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1.5" required>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 block mb-1">Confirm New Password</label>
+                    <input type="password" name="confirm_password" class="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1.5" required>
+                </div>
+            </div>
+            <button type="submit" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded">Update Password</button>
+        </form>
+    </div>
+
+
+    <!-- Job Search Assistant -->
+    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/60 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">JOB SEARCH ASSISTANT</h3>
+            <span class="text-xs text-slate-500 dark:text-slate-400">{{ user.applications_auto_sent or 0 }} applications sent automatically</span>
+        </div>
+        <form method="POST" action="/automation/settings" class="space-y-4">
+            <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                <input type="checkbox" name="automation_enabled" value="1" {% if user.automation_enabled %}checked{% endif %}>
+                Automatically search and apply on my behalf
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Target band</label>
+                    <input type="text" name="preferred_band" value="{{ user.preferred_band or '' }}" placeholder="e.g. Band 6" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Preferred region</label>
+                    <input type="text" name="preferred_region" value="{{ user.preferred_region or '' }}" placeholder="e.g. London" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-slate-500 dark:text-slate-400 block mb-1">Clinical interest</label>
+                    <input type="text" name="preferred_clinical_interest" value="{{ user.preferred_clinical_interest or '' }}" placeholder="e.g. Adult Nursing" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded px-2 py-1.5 dark:text-white">
+                </div>
+            </div>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">These criteria also power the "Recommended For You" feed on your dashboard.</p>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded">Save preferences</button>
+        </form>
+    </div>
+
+        <!-- Notification Preferences -->
+    <div class="bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-xl p-5 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight mb-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">NOTIFICATIONS</h3>
+        <form method="POST" action="/settings/notifications" class="space-y-3">
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" name="email_alerts" {% if user.email_alerts %}checked{% endif %}>
+                Email me when a new job matches my criteria
+            </label>
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+                <input type="checkbox" name="interview_reminders" {% if user.interview_reminders %}checked{% endif %}>
+                Send interview reminders via email
+            </label>
+            <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-4 py-2 rounded mt-2">Save Settings</button>
+        </form>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="bg-red-50 border border-red-200 rounded-xl p-5">
+        <h3 class="text-sm font-bold text-red-700 tracking-tight mb-2">DANGER ZONE</h3>
+        <p class="text-xs text-red-600 mb-4">Deleting your account is permanent and cannot be undone. All your job applications and documents will be lost.</p>
+        <form method="POST" action="/settings/delete-account" onsubmit="return confirm('Are you sure you want to delete your account?');">
+            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded">Delete Account</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
